@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>PostIt YouTube Shorts Uploader</title>
+    <style>
+        body {
+            max-width: 400px;
+            margin: 2rem auto;
+            font-family: Arial, sans-serif;
+        }
+        
+        input,
+        button {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+        }
+        
+        pre {
+            background: #eee;
+            padding: 1rem;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>PostIt Auth & Shorts Upload</h1>
+
+    <h2>Sign Up</h2>
+    <input id="signup-email" type="email" placeholder="Email" />
+    <input id="signup-username" type="text" placeholder="Username" />
+    <input id="signup-password" type="password" placeholder="Password" />
+    <button id="signup-btn">Sign Up</button>
+
+    <h2>Login</h2>
+    <input id="login-email" type="email" placeholder="Email" />
+    <input id="login-password" type="password" placeholder="Password" />
+    <button id="login-btn">Login</button>
+
+    <h2>Account Info</h2>
+    <button id="me-btn">Get My Info</button>
+    <pre id="user-info">Not logged in</pre>
+
+    <h2>Link YouTube Account</h2>
+    <button id="link-youtube-btn">Link YouTube</button>
+
+    <h2>Upload YouTube Short</h2>
+    <input type="file" id="video-file" accept="video/*" />
+    <input type="text" id="video-title" placeholder="Video Title" />
+    <input type="text" id="video-desc" placeholder="Description (optional)" />
+    <button id="upload-btn">Upload Short</button>
+
+    <script>
+        const signupBtn = document.getElementById('signup-btn');
+        const loginBtn = document.getElementById('login-btn');
+        const meBtn = document.getElementById('me-btn');
+        const linkBtn = document.getElementById('link-youtube-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const userInfo = document.getElementById('user-info');
+
+        signupBtn.onclick = async() => {
+            const email = document.getElementById('signup-email').value;
+            const username = document.getElementById('signup-username').value;
+            const password = document.getElementById('signup-password').value;
+            if (!email || !username || !password) return alert('Fill all signup fields');
+            const res = await fetch('/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    email,
+                    username,
+                    password
+                }),
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+        };
+
+        loginBtn.onclick = async() => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            if (!email || !password) return alert('Fill all login fields');
+            const res = await fetch('/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    email,
+                    password
+                }),
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+        };
+
+        meBtn.onclick = async() => {
+            const res = await fetch('/auth/me', {
+                credentials: 'include'
+            });
+            if (!res.ok) return alert('Not logged in');
+            const data = await res.json();
+            userInfo.textContent = JSON.stringify(data, null, 2);
+        };
+
+        linkBtn.onclick = () => {
+            window.location.href = '/auth/youtube';
+        };
+
+        uploadBtn.onclick = async() => {
+            const fileInput = document.getElementById('video-file');
+            const title = document.getElementById('video-title').value;
+            const description = document.getElementById('video-desc').value;
+            if (!fileInput.files.length) return alert('Select a video file');
+            if (!title) return alert('Enter a video title');
+
+            const formData = new FormData();
+            formData.append('video', fileInput.files[0]);
+            formData.append('title', title);
+            formData.append('description', description);
+
+            const res = await fetch('/youtube/upload', {
+                method: 'POST',
+                credentials: 'include',
+                body: formData,
+            });
+
+            const data = await res.json();
+            alert(data.message || data.error || JSON.stringify(data));
+        };
+    </script>
+</body>
+
+</html>
